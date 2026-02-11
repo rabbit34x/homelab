@@ -18,17 +18,35 @@ echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> ~/.bashrc
 bun --version
 
 # 3. OpenClaw
-echo "[3/3] OpenClaw インストール..."
+echo "[3/4] OpenClaw インストール..."
 curl -fsSL https://openclaw.ai/install.sh | bash
 echo 'export PATH="$HOME/.openclaw/bin:$PATH"' >> ~/.bashrc
 export PATH="$HOME/.openclaw/bin:$PATH"
+
+# 4. 運用スクリプトのインストール
+echo "[4/4] 運用スクリプトのインストール..."
+SCRIPTS_URL="https://raw.githubusercontent.com/rabbit34x/homelab/main/terraform/proxmox/container/openclaw/scripts"
+mkdir -p /usr/local/bin
+for script in start.sh stop.sh restart.sh deploy.sh; do
+  curl -fsSL "$SCRIPTS_URL/$script" -o "/usr/local/bin/openclaw-${script%.sh}"
+  chmod +x "/usr/local/bin/openclaw-${script%.sh}"
+done
+echo "  インストール済み: openclaw-start, openclaw-stop, openclaw-restart, openclaw-deploy"
+
+# .env 雛形の作成
+if [ ! -f /root/.openclaw/.env ]; then
+  mkdir -p /root/.openclaw
+  cat > /root/.openclaw/.env << 'ENVEOF'
+ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
+ENVEOF
+  echo "  .env 雛形を作成: /root/.openclaw/.env"
+fi
 
 echo ""
 echo "=== インストール完了 ==="
 echo ""
 echo "次のステップ（手動）:"
 echo "  1. source ~/.bashrc"
-echo "  2. Codex OAuth の認証: openclaw models auth login --provider openai-codex"
-echo "  3. Discord Bot トークンの設定（openclaw.json を編集）"
-echo "  4. ワークスペースファイルの配置"
-echo "  5. Gateway の起動"
+echo "  2. /root/.openclaw/.env に ANTHROPIC_API_KEY を設定"
+echo "  3. Codex OAuth の認証: openclaw models auth login --provider openai-codex"
+echo "  4. openclaw-deploy で設定ファイルを配置・起動"
