@@ -46,7 +46,10 @@ Discord Developer Portal で2つのBot作成。それぞれ Message Content Inte
 
 ```bash
 source /root/.openclaw/.env
-git clone https://${GITHUB_PAT}@github.com/rabbit34x/openclaw-config.git /root/.openclaw/openclaw-config
+echo "https://x-access-token:${GITHUB_PAT}@github.com" > /root/.git-credentials
+chmod 600 /root/.git-credentials
+git config --global credential.helper store
+git clone https://github.com/rabbit34x/openclaw-config.git /root/.openclaw/openclaw-config
 cd /root/.openclaw/openclaw-config
 git config user.name "openclaw-bot"
 git config user.email "openclaw-bot@noreply"
