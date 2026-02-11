@@ -12,30 +12,19 @@ source ~/.bashrc
 
 ## 2. 認証
 
-### Claude Code CLI
-
-```bash
-claude login
-```
-
-ブラウザ認証が求められる。リモート環境の場合はURLをローカルブラウザで開き、リダイレクトURLをターミナルに貼り付ける。
-
 ### Codex OAuth
 
 ```bash
 openclaw models auth login --provider openai-codex
 ```
 
-同様にブラウザ認証。ChatGPTアカウントでログインする。
+ブラウザ認証。ChatGPTアカウントでログインする。リモート環境の場合はURLをローカルブラウザで開き、リダイレクトURLをターミナルに貼り付ける。
 
-## 3. Claude Max API Proxy の起動確認
+### Anthropic API Key
 
-```bash
-claude-max-api &
-curl http://localhost:3456/health
-```
+ルルは `ANTHROPIC_API_KEY` 環境変数で認証する。起動時に指定する（手順6参照）。
 
-## 4. Discord Bot の作成
+## 3. Discord Bot の作成
 
 Discord Developer Portal (https://discord.com/developers/applications) で2つのアプリケーションを作成：
 
@@ -46,35 +35,60 @@ OAuth2 URL Generator でサーバーに招待：
 - Scopes: `bot`, `applications.commands`
 - Permissions: View Channels, Send Messages, Read Message History, Embed Links, Attach Files, Add Reactions, Manage Channels
 
-## 5. 設定ファイルの配置
+## 4. 設定ファイルの配置
 
-openclaw-config リポジトリからワークスペースファイルを配置：
+openclaw-config リポジトリからワークスペース・Gateway設定を配置：
 
 ```bash
 git clone https://github.com/rabbit34x/openclaw-config.git /tmp/openclaw-config
 
-# ルル
+# ワークスペース
 cp -r /tmp/openclaw-config/workspace-lulu/* ~/.openclaw/workspace-lulu/
-
-# 紗夜
 cp -r /tmp/openclaw-config/workspace-saya/* ~/.openclaw/workspace-saya/
 
 # Gateway 設定
+mkdir -p ~/.openclaw/gateway-lulu ~/.openclaw/gateway-saya
 cp /tmp/openclaw-config/gateway-lulu/openclaw.json ~/.openclaw/gateway-lulu/openclaw.json
 cp /tmp/openclaw-config/gateway-saya/openclaw.json ~/.openclaw/gateway-saya/openclaw.json
 ```
 
 各 `openclaw.json` のプレースホルダーを実際の値に置き換える：
-- `<DISCORD_BOT_TOKEN_LULU>` / `<DISCORD_BOT_TOKEN_SAYA>`
-- `<YOUR_DISCORD_USER_ID>`
-- `<YOUR_GUILD_ID>`
+
+| プレースホルダー | 説明 |
+|-----------------|------|
+| `<DISCORD_BOT_TOKEN_LULU>` | ルル用Discordボットトークン |
+| `<DISCORD_BOT_TOKEN_SAYA>` | 紗夜用Discordボットトークン |
+| `<DISCORD_GUILD_ID>` | DiscordサーバーID |
+| `<DISCORD_CHANNEL_ID>` | DiscordチャンネルID |
+| `<DISCORD_USER_ID>` | あなたのDiscordユーザーID |
+| `<GATEWAY_AUTH_TOKEN>` | Gateway認証トークン（任意の文字列） |
+
+## 5. 状態ディレクトリの作成
+
+2つのGatewayがセッションロックで競合しないよう、状態ディレクトリを分離する：
+
+```bash
+mkdir -p ~/.openclaw/state-lulu ~/.openclaw/state-saya
+```
+
+紗夜のCodex OAuth認証情報を状態ディレクトリにコピー：
+
+```bash
+mkdir -p ~/.openclaw/state-saya/agents/main/agent
+cp ~/.openclaw/agents/main/agent/auth-profiles.json ~/.openclaw/state-saya/agents/main/agent/
+```
 
 ## 6. Gateway の起動
 
 ```bash
-# ルル（Claude）
-OPENCLAW_CONFIG=~/.openclaw/gateway-lulu/openclaw.json openclaw gateway &
+# ルル（Anthropic Claude）
+ANTHROPIC_API_KEY="<YOUR_ANTHROPIC_API_KEY>" \
+OPENCLAW_STATE_DIR=~/.openclaw/state-lulu \
+OPENCLAW_CONFIG_PATH=~/.openclaw/gateway-lulu/openclaw.json \
+  nohup openclaw gateway > /tmp/gateway-lulu.log 2>&1 &
 
-# 紗夜（Codex）
-OPENCLAW_CONFIG=~/.openclaw/gateway-saya/openclaw.json openclaw gateway &
+# 紗夜（OpenAI Codex）
+OPENCLAW_STATE_DIR=~/.openclaw/state-saya \
+OPENCLAW_CONFIG_PATH=~/.openclaw/gateway-saya/openclaw.json \
+  nohup openclaw gateway > /tmp/gateway-saya.log 2>&1 &
 ```
