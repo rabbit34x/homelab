@@ -1,18 +1,55 @@
-# OpenClaw セットアップ
+# OpenClaw
 
-## 1. install.sh の実行
+## 事前準備
 
-コンテナにSSHログイン後：
+初セットアップ前に以下を用意する。
+
+| 項目 | 取得先 | 用途 |
+|------|--------|------|
+| SSH鍵 | ローカルに作成（例: `~/.ssh/proxmox`） | コンテナへのアクセス |
+| Anthropic API Key | console.anthropic.com または Claude Code OAuth | ルルの LLM 認証 |
+| ChatGPT アカウント | openai.com | 紗夜の Codex OAuth 認証 |
+| Discord Bot トークン x2 | Discord Developer Portal | ルル用・紗夜用 |
+| Discord サーバーID | Discord 開発者モードで右クリック → IDをコピー | Gateway設定 |
+| Discord チャンネルID | 同上 | Gateway設定 |
+| Discord ユーザーID | 同上 | Gateway設定 |
+| Gateway認証トークン | 任意の文字列を自分で決める | Gateway API認証 |
+
+## 初期セットアップ
+
+### 1. LXCコンテナ作成
 
 ```bash
-ssh root@192.168.0.113
+cd terraform/proxmox/container/openclaw
+terraform apply
+```
+
+### 2. install.sh の実行
+
+コンテナにSSHログインし、セットアップスクリプトを実行：
+
+```bash
+ssh -i ~/.ssh/proxmox root@192.168.0.113
 curl -fsSL https://raw.githubusercontent.com/rabbit34x/homelab/main/terraform/proxmox/container/openclaw/scripts/install.sh | bash
 source ~/.bashrc
 ```
 
-## 2. 認証
+Bun、OpenClaw、運用スクリプト（`openclaw-start` / `openclaw-stop` / `openclaw-restart`）がインストールされる。
 
-### Codex OAuth
+### 3. 認証
+
+コンテナ上で実行する。
+
+#### Anthropic API Key
+
+```bash
+mkdir -p /root/.openclaw
+cat > /root/.openclaw/.env << 'EOF'
+ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
+EOF
+```
+
+#### Codex OAuth
 
 ```bash
 openclaw models auth login --provider openai-codex
@@ -20,11 +57,7 @@ openclaw models auth login --provider openai-codex
 
 ブラウザ認証。ChatGPTアカウントでログインする。リモート環境の場合はURLをローカルブラウザで開き、リダイレクトURLをターミナルに貼り付ける。
 
-### Anthropic API Key
-
-ルルは `ANTHROPIC_API_KEY` 環境変数で認証する。起動時に指定する（手順6参照）。
-
-## 3. Discord Bot の作成
+### 4. Discord Bot の作成
 
 Discord Developer Portal (https://discord.com/developers/applications) で2つのアプリケーションを作成：
 
@@ -35,21 +68,19 @@ OAuth2 URL Generator でサーバーに招待：
 - Scopes: `bot`, `applications.commands`
 - Permissions: View Channels, Send Messages, Read Message History, Embed Links, Attach Files, Add Reactions, Manage Channels
 
-## 4. 設定ファイルの配置
+### 5. Gateway設定の配置
 
-openclaw-config リポジトリからワークスペース・Gateway設定を配置：
+コンテナ上で実行する。
 
 ```bash
+# openclaw-config からテンプレートをコピー（ローカルからSCPでも可）
 git clone https://github.com/rabbit34x/openclaw-config.git /tmp/openclaw-config
 
-# ワークスペース
-cp -r /tmp/openclaw-config/workspace-lulu/* ~/.openclaw/workspace-lulu/
-cp -r /tmp/openclaw-config/workspace-saya/* ~/.openclaw/workspace-saya/
-
-# Gateway 設定
 mkdir -p ~/.openclaw/gateway-lulu ~/.openclaw/gateway-saya
 cp /tmp/openclaw-config/gateway-lulu/openclaw.json ~/.openclaw/gateway-lulu/openclaw.json
 cp /tmp/openclaw-config/gateway-saya/openclaw.json ~/.openclaw/gateway-saya/openclaw.json
+
+rm -rf /tmp/openclaw-config
 ```
 
 各 `openclaw.json` のプレースホルダーを実際の値に置き換える：
@@ -63,9 +94,19 @@ cp /tmp/openclaw-config/gateway-saya/openclaw.json ~/.openclaw/gateway-saya/open
 | `<DISCORD_USER_ID>` | あなたのDiscordユーザーID |
 | `<GATEWAY_AUTH_TOKEN>` | Gateway認証トークン（任意の文字列） |
 
-## 5. 状態ディレクトリの作成
+### 6. ワークスペースの配置
 
-2つのGatewayがセッションロックで競合しないよう、状態ディレクトリを分離する：
+ローカルマシンから `deploy.sh` を実行：
+
+```bash
+./deploy.sh
+```
+
+openclaw-config リポジトリからワークスペースファイル（SOUL.md, IDENTITY.md 等）を転送し、Gatewayを起動する。
+
+### 7. 状態ディレクトリの作成
+
+コンテナ上で実行する。2つのGatewayがセッションロックで競合しないよう分離する：
 
 ```bash
 mkdir -p ~/.openclaw/state-lulu ~/.openclaw/state-saya
@@ -78,7 +119,7 @@ mkdir -p ~/.openclaw/state-saya/agents/main/agent
 cp ~/.openclaw/agents/main/agent/auth-profiles.json ~/.openclaw/state-saya/agents/main/agent/
 ```
 
-## 6. Gateway の起動
+### 8. 起動
 
 ```bash
 openclaw-start
@@ -100,7 +141,11 @@ openclaw-start
 
 ### 操作一覧
 
-ローカルマシンから実行する。`SSH_TARGET="-i ~/.ssh/proxmox root@192.168.0.113"` として記載。
+ローカルマシンから実行する。
+
+```bash
+SSH_TARGET="-i ~/.ssh/proxmox root@192.168.0.113"
+```
 
 | 操作 | コマンド |
 |------|---------|
