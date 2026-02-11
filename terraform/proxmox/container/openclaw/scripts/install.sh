@@ -4,12 +4,12 @@ set -euo pipefail
 echo "=== OpenClaw セットアップ ==="
 
 # 1. システム更新と依存パッケージ
-echo "[1/3] システム更新..."
+echo "[1/4] システム更新..."
 apt update && apt upgrade -y
 apt install -y curl unzip git
 
 # 2. Bun ランタイム（OpenClaw に必要）
-echo "[2/3] Bun インストール..."
+echo "[2/4] Bun インストール..."
 curl -fsSL https://bun.sh/install | bash
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
@@ -31,22 +31,21 @@ for script in start.sh stop.sh restart.sh; do
   curl -fsSL "$SCRIPTS_URL/$script" -o "/usr/local/bin/openclaw-${script%.sh}"
   chmod +x "/usr/local/bin/openclaw-${script%.sh}"
 done
-echo "  インストール済み: openclaw-start, openclaw-stop, openclaw-restart"
 
 # .env 雛形の作成
 if [ ! -f /root/.openclaw/.env ]; then
   mkdir -p /root/.openclaw
   cat > /root/.openclaw/.env << 'ENVEOF'
-ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
+ANTHROPIC_API_KEY=
+DISCORD_BOT_TOKEN_LULU=
+DISCORD_BOT_TOKEN_SAYA=
+DISCORD_GUILD_ID=
+DISCORD_CHANNEL_ID=
+DISCORD_USER_ID=
+GATEWAY_AUTH_TOKEN=
+GITHUB_PAT=
 ENVEOF
-  echo "  .env 雛形を作成: /root/.openclaw/.env"
 fi
 
 echo ""
 echo "=== インストール完了 ==="
-echo ""
-echo "次のステップ（手動）:"
-echo "  1. source ~/.bashrc"
-echo "  2. /root/.openclaw/.env に ANTHROPIC_API_KEY を設定"
-echo "  3. Codex OAuth の認証: openclaw models auth login --provider openai-codex"
-echo "  4. ローカルから deploy.sh で設定ファイルを配置・起動"
