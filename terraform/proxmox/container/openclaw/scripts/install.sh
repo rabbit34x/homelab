@@ -27,11 +27,11 @@ export PATH="$HOME/.openclaw/bin:$PATH"
 echo "[4/4] 運用スクリプトのインストール..."
 SCRIPTS_URL="https://raw.githubusercontent.com/rabbit34x/homelab/main/terraform/proxmox/container/openclaw/scripts"
 mkdir -p /usr/local/bin
-for script in start.sh stop.sh restart.sh deploy.sh; do
+for script in start.sh stop.sh restart.sh; do
   curl -fsSL "$SCRIPTS_URL/$script" -o "/usr/local/bin/openclaw-${script%.sh}"
   chmod +x "/usr/local/bin/openclaw-${script%.sh}"
 done
-echo "  インストール済み: openclaw-start, openclaw-stop, openclaw-restart, openclaw-deploy"
+echo "  インストール済み: openclaw-start, openclaw-stop, openclaw-restart"
 
 # .env 雛形の作成
 if [ ! -f /root/.openclaw/.env ]; then
@@ -49,4 +49,4 @@ echo "次のステップ（手動）:"
 echo "  1. source ~/.bashrc"
 echo "  2. /root/.openclaw/.env に ANTHROPIC_API_KEY を設定"
 echo "  3. Codex OAuth の認証: openclaw models auth login --provider openai-codex"
-echo "  4. openclaw-deploy で設定ファイルを配置・起動"
+echo "  4. ローカルから deploy.sh で設定ファイルを配置・起動"
