@@ -13,7 +13,7 @@ resource "proxmox_lxc" "container" {
   tags         = "service;ubuntu"
 
   ssh_public_keys = <<-EOT
-    ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEqLIvRqHO6fNvuErP/DnBGZEGZlcZ4OBv2HXkodJ93z
+    ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGm/Kxkt6dE/GZ5yYrxj0Uw3ugcm8o1YsjLmGEA9Rn3u minase@takatsuki
   EOT
 
   network {
