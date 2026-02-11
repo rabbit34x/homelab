@@ -36,20 +36,27 @@ source ~/.bashrc
 
 Bun、OpenClaw、運用スクリプト（`openclaw-start` / `openclaw-stop` / `openclaw-restart`）がインストールされる。
 
-### 3. 認証
+### 3. シークレットの設定
 
-コンテナ上で実行する。
-
-#### Anthropic API Key
+コンテナ上で `/root/.openclaw/.env` を編集する（install.sh で雛形が作成済み）：
 
 ```bash
-mkdir -p /root/.openclaw
-cat > /root/.openclaw/.env << 'EOF'
-ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
-EOF
+vi /root/.openclaw/.env
 ```
 
-#### Codex OAuth
+| 変数名 | 説明 |
+|--------|------|
+| `ANTHROPIC_API_KEY` | Anthropic API キー |
+| `DISCORD_BOT_TOKEN_LULU` | ルル用Discordボットトークン |
+| `DISCORD_BOT_TOKEN_SAYA` | 紗夜用Discordボットトークン |
+| `DISCORD_GUILD_ID` | DiscordサーバーID |
+| `DISCORD_CHANNEL_ID` | DiscordチャンネルID |
+| `DISCORD_USER_ID` | あなたのDiscordユーザーID |
+| `GATEWAY_AUTH_TOKEN` | Gateway認証トークン（任意の文字列） |
+
+### 4. Codex OAuth
+
+コンテナ上で実行する：
 
 ```bash
 openclaw models auth login --provider openai-codex
@@ -57,7 +64,7 @@ openclaw models auth login --provider openai-codex
 
 ブラウザ認証。ChatGPTアカウントでログインする。リモート環境の場合はURLをローカルブラウザで開き、リダイレクトURLをターミナルに貼り付ける。
 
-### 4. Discord Bot の作成
+### 5. Discord Bot の作成
 
 Discord Developer Portal (https://discord.com/developers/applications) で2つのアプリケーションを作成：
 
@@ -68,43 +75,9 @@ OAuth2 URL Generator でサーバーに招待：
 - Scopes: `bot`, `applications.commands`
 - Permissions: View Channels, Send Messages, Read Message History, Embed Links, Attach Files, Add Reactions, Manage Channels
 
-### 5. Gateway設定の配置
+取得したトークンを手順3の `.env` に記入する。
 
-コンテナ上で実行する。
-
-```bash
-# openclaw-config からテンプレートをコピー（ローカルからSCPでも可）
-git clone https://github.com/rabbit34x/openclaw-config.git /tmp/openclaw-config
-
-mkdir -p ~/.openclaw/gateway-lulu ~/.openclaw/gateway-saya
-cp /tmp/openclaw-config/gateway-lulu/openclaw.json ~/.openclaw/gateway-lulu/openclaw.json
-cp /tmp/openclaw-config/gateway-saya/openclaw.json ~/.openclaw/gateway-saya/openclaw.json
-
-rm -rf /tmp/openclaw-config
-```
-
-各 `openclaw.json` のプレースホルダーを実際の値に置き換える：
-
-| プレースホルダー | 説明 |
-|-----------------|------|
-| `<DISCORD_BOT_TOKEN_LULU>` | ルル用Discordボットトークン |
-| `<DISCORD_BOT_TOKEN_SAYA>` | 紗夜用Discordボットトークン |
-| `<DISCORD_GUILD_ID>` | DiscordサーバーID |
-| `<DISCORD_CHANNEL_ID>` | DiscordチャンネルID |
-| `<DISCORD_USER_ID>` | あなたのDiscordユーザーID |
-| `<GATEWAY_AUTH_TOKEN>` | Gateway認証トークン（任意の文字列） |
-
-### 6. ワークスペースの配置
-
-ローカルマシンから `deploy.sh` を実行：
-
-```bash
-./deploy.sh
-```
-
-openclaw-config リポジトリからワークスペースファイル（SOUL.md, IDENTITY.md 等）を転送し、Gatewayを起動する。
-
-### 7. 状態ディレクトリの作成
+### 6. 状態ディレクトリの作成
 
 コンテナ上で実行する。2つのGatewayがセッションロックで競合しないよう分離する：
 
@@ -119,11 +92,15 @@ mkdir -p ~/.openclaw/state-saya/agents/main/agent
 cp ~/.openclaw/agents/main/agent/auth-profiles.json ~/.openclaw/state-saya/agents/main/agent/
 ```
 
-### 8. 起動
+### 7. デプロイ・起動
+
+ローカルマシンから `deploy.sh` を実行：
 
 ```bash
-openclaw-start
+./deploy.sh
 ```
+
+openclaw-config リポジトリからワークスペース・Gateway設定を転送し、`.env` の値でプレースホルダーを自動置換して、Gatewayを起動する。
 
 ---
 
@@ -133,7 +110,7 @@ openclaw-start
 
 | ファイル | パス (コンテナ上) | 内容 |
 |---------|------------------|------|
-| `.env` | `/root/.openclaw/.env` | `ANTHROPIC_API_KEY` |
+| `.env` | `/root/.openclaw/.env` | 全シークレット（APIキー、Discordトークン、ID等） |
 | ルル Gateway設定 | `/root/.openclaw/gateway-lulu/openclaw.json` | モデル、Discord、ポート等 |
 | 紗夜 Gateway設定 | `/root/.openclaw/gateway-saya/openclaw.json` | モデル、Discord、ポート等 |
 | ルル ワークスペース | `/root/.openclaw/workspace-lulu/` | SOUL.md, IDENTITY.md, AGENTS.md, USER.md |
@@ -152,7 +129,6 @@ SSH_TARGET="-i ~/.ssh/proxmox root@192.168.0.113"
 | 起動 | `ssh $SSH_TARGET openclaw-start` |
 | 停止 | `ssh $SSH_TARGET openclaw-stop` |
 | 再起動 | `ssh $SSH_TARGET openclaw-restart` |
-| ワークスペースデプロイ | ローカルで `deploy.sh` を実行 |
-| Gateway設定変更 | `ssh $SSH_TARGET` でログインし `openclaw.json` を編集 → `openclaw-restart` |
+| 全設定デプロイ | ローカルで `deploy.sh` を実行 |
 | ログ確認（ルル） | `ssh $SSH_TARGET "tail /tmp/gateway-lulu.log"` |
 | ログ確認（紗夜） | `ssh $SSH_TARGET "tail /tmp/gateway-saya.log"` |

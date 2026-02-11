@@ -38,6 +38,12 @@ if [ ! -f /root/.openclaw/.env ]; then
   mkdir -p /root/.openclaw
   cat > /root/.openclaw/.env << 'ENVEOF'
 ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
+DISCORD_BOT_TOKEN_LULU=<YOUR_DISCORD_BOT_TOKEN_LULU>
+DISCORD_BOT_TOKEN_SAYA=<YOUR_DISCORD_BOT_TOKEN_SAYA>
+DISCORD_GUILD_ID=<YOUR_DISCORD_GUILD_ID>
+DISCORD_CHANNEL_ID=<YOUR_DISCORD_CHANNEL_ID>
+DISCORD_USER_ID=<YOUR_DISCORD_USER_ID>
+GATEWAY_AUTH_TOKEN=<YOUR_GATEWAY_AUTH_TOKEN>
 ENVEOF
   echo "  .env 雛形を作成: /root/.openclaw/.env"
 fi
@@ -47,6 +53,6 @@ echo "=== インストール完了 ==="
 echo ""
 echo "次のステップ（手動）:"
 echo "  1. source ~/.bashrc"
-echo "  2. /root/.openclaw/.env に ANTHROPIC_API_KEY を設定"
+echo "  2. /root/.openclaw/.env に各種シークレットを設定"
 echo "  3. Codex OAuth の認証: openclaw models auth login --provider openai-codex"
 echo "  4. ローカルから deploy.sh で設定ファイルを配置・起動"
