@@ -81,14 +81,33 @@ cp ~/.openclaw/agents/main/agent/auth-profiles.json ~/.openclaw/state-saya/agent
 ## 6. Gateway の起動
 
 ```bash
-# ルル（Anthropic Claude）
-ANTHROPIC_API_KEY="<YOUR_ANTHROPIC_API_KEY>" \
-OPENCLAW_STATE_DIR=~/.openclaw/state-lulu \
-OPENCLAW_CONFIG_PATH=~/.openclaw/gateway-lulu/openclaw.json \
-  nohup openclaw gateway > /tmp/gateway-lulu.log 2>&1 &
-
-# 紗夜（OpenAI Codex）
-OPENCLAW_STATE_DIR=~/.openclaw/state-saya \
-OPENCLAW_CONFIG_PATH=~/.openclaw/gateway-saya/openclaw.json \
-  nohup openclaw gateway > /tmp/gateway-saya.log 2>&1 &
+openclaw-start
 ```
+
+---
+
+## 運用
+
+### 設定ファイル一覧
+
+| ファイル | パス (コンテナ上) | 内容 |
+|---------|------------------|------|
+| `.env` | `/root/.openclaw/.env` | `ANTHROPIC_API_KEY` |
+| ルル Gateway設定 | `/root/.openclaw/gateway-lulu/openclaw.json` | モデル、Discord、ポート等 |
+| 紗夜 Gateway設定 | `/root/.openclaw/gateway-saya/openclaw.json` | モデル、Discord、ポート等 |
+| ルル ワークスペース | `/root/.openclaw/workspace-lulu/` | SOUL.md, IDENTITY.md, AGENTS.md, USER.md |
+| 紗夜 ワークスペース | `/root/.openclaw/workspace-saya/` | 同上 |
+
+### 操作一覧
+
+ローカルマシンから実行する。`SSH_TARGET="-i ~/.ssh/proxmox root@192.168.0.113"` として記載。
+
+| 操作 | コマンド |
+|------|---------|
+| 起動 | `ssh $SSH_TARGET openclaw-start` |
+| 停止 | `ssh $SSH_TARGET openclaw-stop` |
+| 再起動 | `ssh $SSH_TARGET openclaw-restart` |
+| ワークスペースデプロイ | ローカルで `deploy.sh` を実行 |
+| Gateway設定変更 | `ssh $SSH_TARGET` でログインし `openclaw.json` を編集 → `openclaw-restart` |
+| ログ確認（ルル） | `ssh $SSH_TARGET "tail /tmp/gateway-lulu.log"` |
+| ログ確認（紗夜） | `ssh $SSH_TARGET "tail /tmp/gateway-saya.log"` |
